@@ -103,7 +103,8 @@ public class TCPClient {
 
         StringBuilder stringBuilder = new StringBuilder(message);
         stringBuilder.insert(0, "msg ");
-        return sendCommand(message);
+
+        return sendCommand(stringBuilder.toString());
     }
 
     /**
