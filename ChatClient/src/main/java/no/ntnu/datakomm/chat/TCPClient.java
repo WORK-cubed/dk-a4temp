@@ -139,10 +139,7 @@ public class TCPClient {
      * clear your current user list and use events in the listener.
      */
     public void refreshUserList() {
-        // TODO Step 5: implement this method
-        // Hint: Use Wireshark and the provided chat client reference app to find out what
-        // commands the
-        // client and server exchange for user listing.
+        sendCommand("users");
     }
 
     /**
@@ -216,12 +213,21 @@ public class TCPClient {
     private void parseIncomingCommands() {
         while (isConnectionActive()) {
             String response = waitServerResponse();
-            switch (response) {
+            String command = response.split(" ")[0];
+            int offset = command.length() + 1;
+            switch (command) {
                 case "loginok":
                     onLoginResult(true, "Successfully logged in");
                     break;
                 case "loginerr":
-                    onLoginResult(false, "Couldn't log in");
+                    onLoginResult(false, response.substring(offset));
+                    break;
+                case "users":
+                    String[] users = response.substring(offset).split(" ");
+                    onUsersList(users);
+                    break;
+                default:
+                    System.out.println(response);
                     break;
             }
 
@@ -296,7 +302,9 @@ public class TCPClient {
      * @param users List with usernames
      */
     private void onUsersList(String[] users) {
-        // TODO Step 5: Implement this method
+        for (ChatListener l :listeners) {
+            l.onUserList(users);
+        }
     }
 
     /**
