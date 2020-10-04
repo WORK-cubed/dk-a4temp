@@ -150,10 +150,14 @@ public class TCPClient {
      * @return true if message sent, false on error
      */
     public boolean sendPrivateMessage(String recipient, String message) {
-        // TODO Step 6: Implement this method
-        // Hint: Reuse sendCommand() method
-        // Hint: update lastError if you want to store the reason for the error.
-        return false;
+        boolean success = false;
+        if (isConnectionActive()) {
+            success = sendCommand(String.format("privmsg %s %s", recipient, message));
+            if (!success) {
+                lastError = "Couldn't send private message";
+            }
+        }
+        return success;
     }
 
 
@@ -230,9 +234,6 @@ public class TCPClient {
                     System.out.println(response);
                     break;
             }
-
-            // TODO Step 5: update this method, handle user-list response from the server
-            // Hint: In Step 5 reuse onUserList() method
 
             // TODO Step 7: add support for incoming chat messages from other users (types: msg,
           //  privmsg)
