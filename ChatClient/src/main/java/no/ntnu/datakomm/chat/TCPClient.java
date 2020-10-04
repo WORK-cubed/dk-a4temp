@@ -109,7 +109,6 @@ public class TCPClient {
             lastError = "Message may not be null";
             throw new IllegalArgumentException("Message may not be null");
         }
-
         StringBuilder stringBuilder = new StringBuilder(message);
         stringBuilder.insert(0, "msg ");
 
@@ -165,8 +164,7 @@ public class TCPClient {
      * Send a request for the list of commands that server supports.
      */
     public void askSupportedCommands() {
-        // TODO Step 8: Implement this method
-        // Hint: Reuse sendCommand() method
+        this.sendCommand("help");
     }
 
 
@@ -243,13 +241,13 @@ public class TCPClient {
                 case "cmderr":
                     onCmdError(response.substring(offset));
                     break;
+                case "supported":
+                    onSupported(response.substring(offset).split(" "));
+                    break;
                 default:
-                    System.out.println(response);
+                    //Handle unknown commands
                     break;
             }
-
-            // TODO Step 8: add support for incoming supported command list (type: supported)
-
         }
     }
 
@@ -357,6 +355,8 @@ public class TCPClient {
      * @param commands Commands supported by the server
      */
     private void onSupported(String[] commands) {
-        // TODO Step 8: Implement this method
+        for (ChatListener l: listeners) {
+            l.onSupportedCommands(commands);
+        }
     }
 }
