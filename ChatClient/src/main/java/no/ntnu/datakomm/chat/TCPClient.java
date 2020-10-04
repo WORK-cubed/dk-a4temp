@@ -230,17 +230,23 @@ public class TCPClient {
                     String[] users = response.substring(offset).split(" ");
                     onUsersList(users);
                     break;
+                case "msg":
+                case "privmsg":
+                    boolean priv = command.equals("privmsg");
+                    String sender = response.substring(offset).split(" ")[0];
+                    String content = response.substring(offset + sender.length() + 1);
+                    onMsgReceived(priv, sender, content);
+                    break;
+                case "msgerr":
+                    onMsgError(response.substring(offset));
+                    break;
+                case "cmderr":
+                    onCmdError(response.substring(offset));
+                    break;
                 default:
                     System.out.println(response);
                     break;
             }
-
-            // TODO Step 7: add support for incoming chat messages from other users (types: msg,
-          //  privmsg)
-            // TODO Step 7: add support for incoming message errors (type: msgerr)
-            // TODO Step 7: add support for incoming command errors (type: cmderr)
-            // Hint for Step 7: call corresponding onXXX() methods which will notify all the
-            // listeners
 
             // TODO Step 8: add support for incoming supported command list (type: supported)
 
@@ -303,7 +309,7 @@ public class TCPClient {
      * @param users List with usernames
      */
     private void onUsersList(String[] users) {
-        for (ChatListener l :listeners) {
+        for (ChatListener l : listeners) {
             l.onUserList(users);
         }
     }
@@ -316,7 +322,10 @@ public class TCPClient {
      * @param text   Message text
      */
     private void onMsgReceived(boolean priv, String sender, String text) {
-        // TODO Step 7: Implement this method
+        TextMessage textMessage = new TextMessage(sender, priv, text);
+        for (ChatListener listener : listeners) {
+            listener.onMessageReceived(textMessage);
+        }
     }
 
     /**
@@ -325,7 +334,9 @@ public class TCPClient {
      * @param errMsg Error description returned by the server
      */
     private void onMsgError(String errMsg) {
-        // TODO Step 7: Implement this method
+        for (ChatListener listener : listeners) {
+            listener.onMessageError(errMsg);
+        }
     }
 
     /**
@@ -334,7 +345,9 @@ public class TCPClient {
      * @param errMsg Error message
      */
     private void onCmdError(String errMsg) {
-        // TODO Step 7: Implement this method
+        for (ChatListener listener : listeners) {
+            listener.onCommandError(errMsg);
+        }
     }
 
     /**
