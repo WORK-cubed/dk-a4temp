@@ -27,6 +27,7 @@ public class TCPClient {
      */
     public boolean connect(String host, int port) {
         if (host == null || port < 0) {
+            lastError = "Connection: Invalid arguments for connection";
             throw new IllegalArgumentException("Invalid arguments for connection");
         }
 
@@ -42,7 +43,7 @@ public class TCPClient {
 
             success = true;
         } catch(IOException e) {
-        	success = false;
+        	lastError = "Couldn't connect to server";
         }
 
         return success;
@@ -77,6 +78,7 @@ public class TCPClient {
      */
     private boolean sendCommand(String cmd) {
         if (cmd == null) {
+            lastError = "Command may not be null";
             throw new IllegalArgumentException("Command may not be null");
         }
         boolean success = false;
@@ -97,6 +99,7 @@ public class TCPClient {
      */
     public boolean sendPublicMessage(String message) {
         if (message == null) {
+            lastError = "Message may not be null";
             throw new IllegalArgumentException("Message may not be null");
         }
 
@@ -112,8 +115,16 @@ public class TCPClient {
      * @param username Username to use
      */
     public void tryLogin(String username) {
-        // TODO Step 3: implement this method
-        // Hint: Reuse sendCommand() method
+        if (username == null) {
+            lastError = "Username is invalid";
+            throw new IllegalArgumentException("Username cannot be null");
+        }
+        if (username.isEmpty() || username.trim().equals("")) {
+            lastError = "Username cannot be empty or spaces";
+            throw new IllegalArgumentException("Username cannot be empty or spaces");
+        }
+
+        sendCommand("login " + username);
     }
 
     /**
@@ -156,11 +167,23 @@ public class TCPClient {
      * @return one line of text (one command) received from the server
      */
     private String waitServerResponse() {
-        // TODO Step 3: Implement this method
+
         // TODO Step 4: If you get I/O Exception or null from the stream, it means that something has gone wrong
         // with the stream and hence the socket. Probably a good idea to close the socket in that case.
+        String response = "";
+        try {
+            response = fromServer.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+            lastError = "Server couldn't respond " + e.getMessage();
+            try {
+                connection.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
 
-        return null;
+        return response;
     }
 
     /**
@@ -181,9 +204,7 @@ public class TCPClient {
      */
     public void startListenThread() {
         // Call parseIncomingCommands() in the new thread.
-        Thread t = new Thread(() -> {
-            parseIncomingCommands();
-        });
+        Thread t = new Thread(this::parseIncomingCommands);
         t.start();
     }
 
@@ -193,12 +214,15 @@ public class TCPClient {
      */
     private void parseIncomingCommands() {
         while (isConnectionActive()) {
-            // TODO Step 3: Implement this method
-            // Hint: Reuse waitServerResponse() method
-            // Hint: Have a switch-case (or other way) to check what type of response is received from the server
-            // and act on it.
-            // Hint: In Step 3 you need to handle only login-related responses.
-            // Hint: In Step 3 reuse onLoginResult() method
+            String response = waitServerResponse();
+            switch (response) {
+                case "loginok":
+                    onLoginResult(true, "Successfully logged in");
+                    break;
+                case "loginerr":
+                    onLoginResult(false, "Couldn't log in");
+                    break;
+            }
 
             // TODO Step 5: update this method, handle user-list response from the server
             // Hint: In Step 5 reuse onUserList() method
