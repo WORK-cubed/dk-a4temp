@@ -1,7 +1,10 @@
 package no.ntnu.datakomm.chat;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,6 +26,10 @@ public class TCPClient {
      * @return True on success, false otherwise
      */
     public boolean connect(String host, int port) {
+        if (host == null || port < 0) {
+            throw new IllegalArgumentException("Invalid arguments for connection");
+        }
+
         boolean success = false;
 
         try {
@@ -69,9 +76,18 @@ public class TCPClient {
      * @return true on success, false otherwise
      */
     private boolean sendCommand(String cmd) {
-        // TODO Step 2: Implement this method
-        // Hint: Remember to check if connection is active
-        return false;
+        if (cmd == null) {
+            throw new IllegalArgumentException("Command may not be null");
+        }
+        boolean success = false;
+        if (isConnectionActive()) {
+            if (!cmd.isEmpty() && !cmd.trim().equals("")) {
+                toServer.println(cmd);
+                success = true;
+            }
+
+        }
+        return success;
     }
 
     /**
@@ -81,10 +97,13 @@ public class TCPClient {
      * @return true if message sent, false on error
      */
     public boolean sendPublicMessage(String message) {
-        // TODO Step 2: implement this method
-        // Hint: Reuse sendCommand() method
-        // Hint: update lastError if you want to store the reason for the error.
-        return false;
+        if (message == null) {
+            throw new IllegalArgumentException("Message may not be null");
+        }
+
+        StringBuilder stringBuilder = new StringBuilder(message);
+        stringBuilder.insert(0, "msg ");
+        return sendCommand(message);
     }
 
     /**
