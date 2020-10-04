@@ -9,14 +9,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class TCPClient {
+    private final List<ChatListener> listeners = new LinkedList<>();
     private PrintWriter toServer;
     private BufferedReader fromServer;
     private Socket connection;
-
     // Hint: if you want to store a message for the last error, store it here
     private String lastError = null;
-
-    private final List<ChatListener> listeners = new LinkedList<>();
 
     /**
      * Connect to a chat server.
@@ -42,8 +40,8 @@ public class TCPClient {
             );
 
             success = true;
-        } catch(IOException e) {
-        	lastError = "Couldn't connect to server";
+        } catch (IOException e) {
+            lastError = "Couldn't connect to server";
         }
 
         return success;
@@ -59,8 +57,16 @@ public class TCPClient {
      * that no two threads call this method in parallel.
      */
     public synchronized void disconnect() {
-        // TODO Step 4: implement this method
-        // Hint: remember to check if connection is active
+        if (isConnectionActive()) {
+            try {
+                connection.close();
+                connection = null;
+                onDisconnect();
+            } catch (IOException e) {
+                lastError = "Failed to close connection with the server";
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -73,7 +79,8 @@ public class TCPClient {
     /**
      * Send a command to server.
      *
-     * @param cmd A command. It should include the command word and optional attributes, according to the protocol.
+     * @param cmd A command. It should include the command word and optional attributes,
+     *            according to the protocol.
      * @return true on success, false otherwise
      */
     private boolean sendCommand(String cmd) {
@@ -133,7 +140,8 @@ public class TCPClient {
      */
     public void refreshUserList() {
         // TODO Step 5: implement this method
-        // Hint: Use Wireshark and the provided chat client reference app to find out what commands the
+        // Hint: Use Wireshark and the provided chat client reference app to find out what
+        // commands the
         // client and server exchange for user listing.
     }
 
@@ -167,20 +175,13 @@ public class TCPClient {
      * @return one line of text (one command) received from the server
      */
     private String waitServerResponse() {
-
-        // TODO Step 4: If you get I/O Exception or null from the stream, it means that something has gone wrong
-        // with the stream and hence the socket. Probably a good idea to close the socket in that case.
         String response = "";
         try {
             response = fromServer.readLine();
         } catch (IOException e) {
-            e.printStackTrace();
-            lastError = "Server couldn't respond " + e.getMessage();
-            try {
-                connection.close();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
+            disconnect();
+
+            lastError = "Server closed connection" + e.getMessage();
         }
 
         return response;
@@ -227,10 +228,12 @@ public class TCPClient {
             // TODO Step 5: update this method, handle user-list response from the server
             // Hint: In Step 5 reuse onUserList() method
 
-            // TODO Step 7: add support for incoming chat messages from other users (types: msg, privmsg)
+            // TODO Step 7: add support for incoming chat messages from other users (types: msg,
+          //  privmsg)
             // TODO Step 7: add support for incoming message errors (type: msgerr)
             // TODO Step 7: add support for incoming command errors (type: cmderr)
-            // Hint for Step 7: call corresponding onXXX() methods which will notify all the listeners
+            // Hint for Step 7: call corresponding onXXX() methods which will notify all the
+            // listeners
 
             // TODO Step 8: add support for incoming supported command list (type: supported)
 
@@ -259,7 +262,8 @@ public class TCPClient {
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // The following methods are all event-notificators - notify all the listeners about a specific event.
+    // The following methods are all event-notificators - notify all the listeners about a specific
+    // event.
     // By "event" here we mean "information received from the chat server".
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -281,8 +285,9 @@ public class TCPClient {
      * Internet error)
      */
     private void onDisconnect() {
-        // TODO Step 4: Implement this method
-        // Hint: all the onXXX() methods will be similar to onLoginResult()
+        for (ChatListener listener : listeners) {
+            listener.onDisconnect();
+        }
     }
 
     /**
