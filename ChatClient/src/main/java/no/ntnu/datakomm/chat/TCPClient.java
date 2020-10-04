@@ -35,7 +35,7 @@ public class TCPClient {
         try {
             connection = new Socket(host, port);
 
-            toServer = new PrintWriter(connection.getOutputStream());
+            toServer = new PrintWriter(connection.getOutputStream(), true);
             fromServer = new BufferedReader(
               new InputStreamReader(connection.getInputStream())
             );
@@ -85,7 +85,6 @@ public class TCPClient {
                 toServer.println(cmd);
                 success = true;
             }
-
         }
         return success;
     }
