@@ -231,7 +231,7 @@ public class TCPClient {
                 case "msg":
                 case "privmsg":
                     boolean priv = command.equals("privmsg");
-                    String sender = response.substring(offset).split(" ")[0];
+                    String sender = response.split(" ")[1];
                     String content = response.substring(offset + sender.length() + 1);
                     onMsgReceived(priv, sender, content);
                     break;
